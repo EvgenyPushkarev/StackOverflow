@@ -19,6 +19,9 @@ final class NetworkManager {
         guard let url = URL(string: baseURL + endpoint) else {
             throw NetworkError.badURL
         }
+        
+        print("--- СЕТЕВОЙ ЗАПРОС УЛЕТАЕТ СЮДА: \(url.absoluteString) ---")
+        
         // 1.2. Делаем сетевой запрос через URLSession
         let (data, response) = try await URLSession.shared.data(from: url)
         // 1.3. Проверяем ответ сервера (HTTP статус-код)
@@ -45,12 +48,15 @@ final class NetworkManager {
         // 1.4. Декодируем полученный JSON в наши Swift-модели
         do {
             let decoder = JSONDecoder()
-            // Конвертация snake_case JSON в camelCase модели в дополнение к CodingKeys.
             decoder.keyDecodingStrategy = .convertFromSnakeCase
-            
             return try decoder.decode(T.self, from: data)
-        } catch {
+        } catch let decodingError as DecodingError {
+            // ВЫВОДИМ ДЕТАЛЬНУЮ ОШИБКУ ДЕКОДИРОВАНИЯ В КОНСОЛЬ:
+            print("❌ ОШИБКА ДЕКОДИРОВАНИЯ: \(decodingError)")
             throw NetworkError.decodingError
+        } catch {
+            print("❌ ДРУГАЯ ОШИБКА: \(error.localizedDescription)")
+            throw error
         }
     }
     /// 2. Метод для загрузки вопросов со StackOverflow

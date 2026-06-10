@@ -11,7 +11,7 @@ import SwiftUI
 struct StackOverflowApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            QuestionsView()
         }
     }
 }
