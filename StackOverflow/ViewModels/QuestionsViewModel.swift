@@ -14,45 +14,29 @@ final class QuestionsViewModel {
     // Текст ошибки, если что-то пойдет не так
     var errorMessage: String?
     
-    // Наш сетевой слой (используем Singleton)
+    // Сетевой слой (используем Singleton)
     private let networkManager = NetworkManager.shared
     
-    // MARK: - Инициализатор
-    
-    init() {
-        // Скачиваем вопросы сразу при возникновении ViewModel
-        // Используем Task, так как init не может быть асинхронным сам по себе
-        Task {
-            await fetchQuestions()
-        }
-    }
-    
-    // MARK: - Логика (Сетевой запрос)
-    
-    /// Загружает вопросы через NetworkManager и обрабатывает результат
-    func fetchQuestions() async {
-        // 1. Включаем индикатор загрузки и сбрасываем старые ошибки
-        isLoading = true
-        errorMessage = nil
+    init() {}
         
-        // 2. Блок do-catch для отлова сетевых ошибок
-        do {
-            let fetchedQuestions = try await networkManager.getQuestions()
+        func fetchQuestions() async {
+            // Проверка загрузки чтобы избежать лишних перерисовок UI
+            guard !isLoading else { return }
             
-            // Если всё успешно, сохраняем вопросы в наше свойство
-            self.questions = fetchedQuestions
-            self.isLoading = false
+            isLoading = true
+            errorMessage = nil
             
-        } catch let error as NetworkError {
-            // Если прилетела наша понятная NetworkError, переводим её для пользователя
-            self.errorMessage = error.localizedDescription
-            self.isLoading = false
-            
-        } catch {
-            // На случай непредвиденных системных ошибок
-            self.errorMessage = "Что-то пошло не так: \(error.localizedDescription)"
-            self.isLoading = false
+            do {
+                let fetchedQuestions = try await networkManager.getQuestions()
+                self.questions = fetchedQuestions
+                self.isLoading = false
+            } catch let error as NetworkError {
+                self.errorMessage = error.localizedDescription
+                self.isLoading = false
+            } catch {
+                self.errorMessage = "Что-то пошло не так: \(error.localizedDescription)"
+                self.isLoading = false
+            }
         }
-    }
 }
 

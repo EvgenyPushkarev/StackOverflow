@@ -49,16 +49,30 @@ final class NetworkManager {
         do {
             let decoder = JSONDecoder()
             decoder.keyDecodingStrategy = .convertFromSnakeCase
+            decoder.dateDecodingStrategy = .secondsSince1970
             return try decoder.decode(T.self, from: data)
         } catch let decodingError as DecodingError {
-            // ВЫВОДИМ ДЕТАЛЬНУЮ ОШИБКУ ДЕКОДИРОВАНИЯ В КОНСОЛЬ:
-            print("❌ ОШИБКА ДЕКОДИРОВАНИЯ: \(decodingError)")
-            throw NetworkError.decodingError
+                    // Детальный анализ ошибки декодирования
+                    print("❌❌❌ ОШИБКА ДЕКОДИРОВАНИЯ В ТИПЕ: \(T.self)")
+                    switch decodingError {
+                    case .keyNotFound(let key, let context):
+                        print("Ключ '\(key.stringValue)' не найден. Путь: \(context.codingPath.map { $0.stringValue }.joined(separator: "."))")
+                    case .typeMismatch(let type, let context):
+                        print("Несоответствие типов для \(type). Путь: \(context.codingPath.map { $0.stringValue }.joined(separator: "."))")
+                    case .valueNotFound(let type, let context):
+                        print("Значение типа \(type) не найдено. Путь: \(context.codingPath.map { $0.stringValue }.joined(separator: "."))")
+                    case .dataCorrupted(let context):
+                        print("Данные повреждены: \(context.debugDescription)")
+                    @unknown default:
+                        print("Неизвестная ошибка декодирования: \(decodingError)")
+                    }
+                    throw NetworkError.decodingError
         } catch {
             print("❌ ДРУГАЯ ОШИБКА: \(error.localizedDescription)")
             throw error
         }
     }
+    
     /// 2. Метод для загрузки вопросов со StackOverflow
     /// - Returns: Массив объектов Question
         func getQuestions() async throws -> [Question] {
@@ -78,7 +92,7 @@ final class NetworkManager {
     /// - Returns: Массив объектов Answer
     func getAnswers(for questionId: Int) async throws -> [Answer] {
         // 3.1. Формируем динамический эндпоинт, подставляя ID вопроса прямо в строку
-        let endpoint = "/questions/\(questionId)/answers?order=desc&sort=activity&site=stackoverflow"
+        let endpoint = "/questions/\(questionId)/answers?order=desc&sort=activity&site=stackoverflow&filter=withbody"
         
         // 3.2. Вызываем универсальный fetch и просим его вернуть APIResponse с массивом [Answer]
         let response: APIResponse<Answer> = try await fetch(endpoint: endpoint)

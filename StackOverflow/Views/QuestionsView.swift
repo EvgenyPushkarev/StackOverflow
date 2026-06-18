@@ -23,17 +23,12 @@ struct QuestionsView: View {
                 } else {
                     // 3. Основной контент (Список вопросов)
                     List(viewModel.questions) { question in
-                        // Ссылка для перехода:
-                        NavigationLink {
-                            AnswersView(question: question)
-                        } label: {
+                        NavigationLink(value: question) {
                             VStack(alignment: .leading, spacing: 8) {
-                                // Заголовок вопроса
                                 Text(question.title)
                                     .font(.headline)
                                     .foregroundColor(.primary)
                                 
-                                // Подвал с информацией (Автор и счетчик ответов)
                                 HStack {
                                     Label("\(question.answerCount)", systemImage: "bubble.right")
                                         .font(.caption)
@@ -54,7 +49,11 @@ struct QuestionsView: View {
                 }
             }
             .navigationTitle("StackOverflow")
-            
+            .navigationDestination(for: Question.self) { question in
+                AnswersView(question: question)
+            }
+            .task { await viewModel.fetchQuestions()
+            }
         }
     }
 }

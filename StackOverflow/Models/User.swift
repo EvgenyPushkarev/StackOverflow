@@ -1,12 +1,16 @@
 import Foundation
 
-struct User: Codable, Identifiable {
+struct User: Codable, Identifiable, Hashable {
     let userId: Int?
     let displayName: String
     let profileImage: String?
     let reputation: Int?
     
-    var id: Int {
-            return userId ?? 0
+    // Соответствие протоколу Identifiable с генерацией уникального UUID при отсутствии userId
+        var id: String {
+            if let userId = userId {
+                return String(userId)
+            }
+            return UUID().uuidString
         }
 }

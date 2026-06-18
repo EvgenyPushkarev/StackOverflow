@@ -1,6 +1,6 @@
 import Foundation
 
-struct Question: Codable, Identifiable {
+struct Question: Codable, Identifiable, Hashable {
     let questionId: Int
     let title: String
     let body: String?
